@@ -24,6 +24,10 @@ const upload = require('../middleware/multerConfig');
  *               password:
  *                 type: string
  *                 example: "Password123!"
+ *               type:
+ *                 type: string
+ *                 enum: [admin, employee]
+ *                 example: "employee"
  *     responses:
  *       201:
  *         description: User created successfully
@@ -35,6 +39,17 @@ const upload = require('../middleware/multerConfig');
  *                 message:
  *                   type: string
  *                   example: "User created successfully."
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     type:
+ *                       type: string
  *       400:
  *         description: Validation failed
  *         content:

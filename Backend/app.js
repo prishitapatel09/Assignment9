@@ -11,14 +11,17 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors()); // Enable CORS for all routes
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
 app.use('/user', userRoutes);
 app.use('/images', express.static('images')); // Serve images statically
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs)); // Swagger UI
 
 // Start Server
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 1000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

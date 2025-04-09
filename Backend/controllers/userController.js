@@ -5,9 +5,9 @@ const { isValidEmail, isValidName, isStrongPassword } = require('../utils/valida
 
 // POST /user/create
 const createUser = async (req, res) => {
-  const { fullName, email, password } = req.body;
+  const { fullName, email, password, type } = req.body;
 
-  if (!fullName || !email || !password) {
+  if (!fullName || !email || !password || !type) {
     return res.status(400).json({ error: 'All fields are required.' });
   }
 
@@ -25,6 +25,10 @@ const createUser = async (req, res) => {
     });
   }
 
+  if (!['admin', 'employee'].includes(type)) {
+    return res.status(400).json({ error: 'Validation failed: Type must be either "admin" or "employee".' });
+  }
+
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -32,12 +36,12 @@ const createUser = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ fullName, email, password: hashedPassword });
+    const newUser = new User({ fullName, email, password: hashedPassword, type });
     await newUser.save();
 
     // Create token
     const token = jwt.sign(
-      { userId: newUser._id, email: newUser.email },
+      { userId: newUser._id, email: newUser.email, type: newUser.type },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -46,7 +50,8 @@ const createUser = async (req, res) => {
     const userResponse = {
       id: newUser._id,
       fullName: newUser.fullName,
-      email: newUser.email
+      email: newUser.email,
+      type: newUser.type
     };
 
     res.status(201).json({ 
