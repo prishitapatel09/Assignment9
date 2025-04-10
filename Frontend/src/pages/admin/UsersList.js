@@ -10,8 +10,9 @@ import {
   Typography,
   Container,
   Box,
+  CircularProgress,
 } from '@mui/material';
-import axios from 'axios';
+import { userService } from '../../services/api';
 
 const UsersList = () => {
   const [users, setUsers] = useState([]);
@@ -21,11 +22,13 @@ const UsersList = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('/api/users');
-        setUsers(response.data);
+        const data = await userService.getAllUsers();
+        console.log('Fetched users:', data); // Debug log
+        setUsers(data);
         setLoading(false);
       } catch (err) {
-        setError('Failed to fetch users');
+        console.error('Error fetching users:', err);
+        setError('Failed to fetch users. Please try again later.');
         setLoading(false);
       }
     };
@@ -33,8 +36,19 @@ const UsersList = () => {
     fetchUsers();
   }, []);
 
-  if (loading) return <Typography>Loading...</Typography>;
-  if (error) return <Typography color="error">{error}</Typography>;
+  if (loading) return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+      <CircularProgress />
+    </Box>
+  );
+  
+  if (error) return (
+    <Container maxWidth="lg">
+      <Box sx={{ mt: 4, mb: 4 }}>
+        <Typography color="error" variant="h6">{error}</Typography>
+      </Box>
+    </Container>
+  );
 
   return (
     <Container maxWidth="lg">
@@ -52,13 +66,21 @@ const UsersList = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {users.map((user) => (
-                <TableRow key={user._id}>
-                  <TableCell>{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.portalType}</TableCell>
+              {users.length > 0 ? (
+                users.map((user) => (
+                  <TableRow key={user._id || user.id}>
+                    <TableCell>{user.fullName}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.type}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} align="center">
+                    No users found
+                  </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </TableContainer>
