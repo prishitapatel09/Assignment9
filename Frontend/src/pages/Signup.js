@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
-import { TextField, Button, Container, Typography, Box, Link } from '@mui/material';
+import { TextField, Button, Container, Typography, Box, Link, RadioGroup, FormControlLabel, Radio, FormControl, FormLabel } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useDispatch } from 'react-redux';
+import { loginSuccess } from '../store/slices/authSlice';
+import authService from '../services/authService';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    portalType: 'employee' // Default to employee portal
   });
   const [error, setError] = useState('');
-  const { register } = useAuth();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -32,12 +35,19 @@ const Signup = () => {
     }
 
     try {
-      await register({
+      const response = await authService.register({
         name: formData.fullName,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        type: formData.portalType
       });
-      navigate('/jobs');
+      
+      dispatch(loginSuccess({
+        user: { email: formData.email, name: formData.fullName },
+        portalType: formData.portalType
+      }));
+      
+      navigate(formData.portalType === 'admin' ? '/admin-dashboard' : '/employee-dashboard');
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     }
@@ -88,6 +98,30 @@ const Signup = () => {
                 {error}
               </Typography>
             )}
+
+            <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>
+              <FormLabel component="legend">Select Portal</FormLabel>
+              <RadioGroup
+                row
+                name="portalType"
+                value={formData.portalType}
+                onChange={handleChange}
+                sx={{ justifyContent: 'center' }}
+              >
+                <FormControlLabel 
+                  value="employee" 
+                  control={<Radio />} 
+                  label="Employee Portal" 
+                  sx={{ mr: 4 }}
+                />
+                <FormControlLabel 
+                  value="admin" 
+                  control={<Radio />} 
+                  label="Admin Portal" 
+                />
+              </RadioGroup>
+            </FormControl>
+
             <TextField
               fullWidth
               label="Full Name"

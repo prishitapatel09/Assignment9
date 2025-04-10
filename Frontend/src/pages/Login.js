@@ -1,33 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import { TextField, Button, Container, Typography, Box, Link } from '@mui/material';
+import React, { useState } from 'react';
+import { TextField, Button, Container, Typography, Box, Link, RadioGroup, FormControlLabel, Radio, FormControl, FormLabel } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useDispatch } from 'react-redux';
+import { loginStart, loginSuccess, loginFailure } from '../store/slices/authSlice';
+import authService from '../services/authService';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    portalType: 'employee' // Default to employee portal
+  });
   const [error, setError] = useState('');
-  const { login } = useAuth();
-  const { isAuthenticated: isAuth0Authenticated } = useAuth0();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Redirect if authenticated through Auth0
-  useEffect(() => {
-    if (isAuth0Authenticated) {
-      navigate('/jobs');
-    }
-  }, [isAuth0Authenticated, navigate]);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    dispatch(loginStart());
 
     try {
-      await login(email, password);
-      navigate('/jobs');
+      const response = await authService.login(formData.email, formData.password);
+      
+      dispatch(loginSuccess({
+        user: { email: formData.email },
+        portalType: formData.portalType
+      }));
+      
+      navigate(formData.portalType === 'admin' ? '/admin-dashboard' : '/employee-dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      const errorMessage = err.message || 'Login failed. Please try again.';
+      dispatch(loginFailure(errorMessage));
+      setError(errorMessage);
     }
   };
 
@@ -47,56 +60,19 @@ const Login = () => {
             mx: 'auto'
           }}
         >
-          {/* Logo */}
           <Typography 
-            variant="h4" 
-            sx={{ 
-              mb: 1, 
-              fontWeight: 700,
-              color: '#1a1a1a',
-              fontSize: '2rem'
-            }}
-          >
-            Job Portal
-          </Typography>
-
-          {/* Welcome Message */}
-          <Typography 
-            variant="h3" 
-            sx={{ 
-              mb: 1,
-              fontWeight: 700,
-              color: '#1a1a1a',
-              fontSize: '2.5rem',
-              lineHeight: 1.2
-            }}
-          >
-            Welcome back,
-          </Typography>
-          <Typography 
-            variant="h3" 
-            sx={{ 
-              mb: 3,
-              fontWeight: 700,
-              color: '#1a1a1a',
-              fontSize: '2.5rem',
-              lineHeight: 1.2
-            }}
-          >
-            Professional!
-          </Typography>
-          <Typography 
-            variant="body1" 
+            variant="h2" 
             sx={{ 
               mb: 4,
-              color: '#666666',
-              fontSize: '1rem'
+              fontWeight: 700,
+              color: '#1a1a1a',
+              fontSize: { xs: '2rem', md: '2.5rem' },
+              textAlign: 'center'
             }}
           >
-            We are glad to see you again! Please enter your details.
+            Login
           </Typography>
 
-          {/* Login Form */}
           <Box component="form" onSubmit={handleSubmit}>
             {error && (
               <Typography 
@@ -112,12 +88,37 @@ const Login = () => {
                 {error}
               </Typography>
             )}
+
+            <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>
+              <FormLabel component="legend">Select Portal</FormLabel>
+              <RadioGroup
+                row
+                name="portalType"
+                value={formData.portalType}
+                onChange={handleChange}
+                sx={{ justifyContent: 'center' }}
+              >
+                <FormControlLabel 
+                  value="employee" 
+                  control={<Radio />} 
+                  label="Employee Portal" 
+                  sx={{ mr: 4 }}
+                />
+                <FormControlLabel 
+                  value="admin" 
+                  control={<Radio />} 
+                  label="Admin Portal" 
+                />
+              </RadioGroup>
+            </FormControl>
+
             <TextField
               fullWidth
               label="Email"
+              name="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={formData.email}
+              onChange={handleChange}
               required
               sx={{
                 mb: 2,
@@ -140,9 +141,10 @@ const Login = () => {
             <TextField
               fullWidth
               label="Password"
+              name="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={handleChange}
               required
               sx={{
                 mb: 3,
@@ -162,27 +164,6 @@ const Login = () => {
                 }
               }}
             />
-
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <input type="checkbox" id="remember" style={{ accentColor: '#1a1a1a' }} />
-                <label htmlFor="remember" style={{ color: '#666666', fontSize: '0.875rem' }}>Remember me</label>
-              </Box>
-              <Link
-                component={RouterLink}
-                to="/forgot-password"
-                sx={{
-                  color: '#1a1a1a',
-                  textDecoration: 'none',
-                  fontSize: '0.875rem',
-                  '&:hover': {
-                    textDecoration: 'underline'
-                  }
-                }}
-              >
-                Forgot Password?
-              </Link>
-            </Box>
 
             <Button
               type="submit"
@@ -223,7 +204,7 @@ const Login = () => {
                   }
                 }}
               >
-                Sign up
+                Sign up here
               </Link>
             </Typography>
           </Box>

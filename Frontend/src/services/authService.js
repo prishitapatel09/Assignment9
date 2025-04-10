@@ -3,7 +3,7 @@ import { authService as apiAuthService } from './api';
 const login = async (email, password) => {
   try {
     const response = await apiAuthService.login(email, password);
-    return response.token;
+    return response;
   } catch (error) {
     console.error('Login error:', error);
     throw error;

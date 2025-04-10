@@ -58,7 +58,8 @@ export const authService = {
     try {
       console.log('Attempting registration with:', { 
         email: userData.email,
-        fullName: userData.fullName 
+        fullName: userData.name,
+        type: userData.type
       });
       const response = await api.post('/create', userData);
       console.log('Registration successful:', response.data);

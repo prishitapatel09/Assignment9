@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { AuthProvider } from './context/AuthContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -13,7 +13,13 @@ import Contact from './pages/Contact';
 import CompanyShowcase from './pages/CompanyShowcase';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import ProtectedRoute from './components/ProtectedRoute';
+import { Provider } from 'react-redux';
+import { store } from './store/store';
+import { useSelector } from 'react-redux';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UsersList from './pages/admin/UsersList';
+import AddJob from './pages/admin/AddJob';
+import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 
 // Create a theme instance
 const theme = createTheme({
@@ -103,6 +109,21 @@ const AUTH0_DOMAIN = "YOUR_AUTH0_DOMAIN";
 const AUTH0_CLIENT_ID = "YOUR_AUTH0_CLIENT_ID";
 const AUTH0_REDIRECT_URI = window.location.origin;
 
+// Protected Route Component
+const ProtectedRoute = ({ children, allowedPortalType }) => {
+  const { isAuthenticated, portalType } = useSelector((state) => state.auth);
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  
+  if (allowedPortalType && portalType !== allowedPortalType) {
+    return <Navigate to="/" />;
+  }
+  
+  return children;
+};
+
 function App() {
   return (
     <Auth0Provider
@@ -114,34 +135,72 @@ function App() {
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
         <ThemeProvider theme={theme}>
           <AuthProvider>
-            <Router>
-              <PageLayout>
-                <NavBar />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/about" element={<About />} />
-                  <Route
-                    path="/jobs"
-                    element={
-                      <ProtectedRoute>
-                        <JobListings />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route
-                    path="/companies"
-                    element={
-                      <ProtectedRoute>
-                        <CompanyShowcase />
-                      </ProtectedRoute>
-                    }
-                  />
-                </Routes>
-              </PageLayout>
-            </Router>
+            <Provider store={store}>
+              <Router>
+                <PageLayout>
+                  <NavBar />
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/about" element={<About />} />
+                    <Route
+                      path="/jobs"
+                      element={
+                        <ProtectedRoute>
+                          <JobListings />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route
+                      path="/companies"
+                      element={
+                        <ProtectedRoute>
+                          <CompanyShowcase />
+                        </ProtectedRoute>
+                      }
+                    />
+                    
+                    {/* Admin Routes */}
+                    <Route
+                      path="/admin-dashboard"
+                      element={
+                        <ProtectedRoute allowedPortalType="admin">
+                          <AdminDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/users"
+                      element={
+                        <ProtectedRoute allowedPortalType="admin">
+                          <UsersList />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/add-job"
+                      element={
+                        <ProtectedRoute allowedPortalType="admin">
+                          <AddJob />
+                        </ProtectedRoute>
+                      }
+                    />
+                    
+                    {/* Employee Routes */}
+                    <Route
+                      path="/employee-dashboard"
+                      element={
+                        <ProtectedRoute allowedPortalType="employee">
+                          <EmployeeDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Routes>
+                </PageLayout>
+              </Router>
+            </Provider>
           </AuthProvider>
         </ThemeProvider>
       </GoogleOAuthProvider>
