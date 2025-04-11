@@ -47,6 +47,26 @@ export const authService = {
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
       }
+      
+      // If the user type is missing in the response, fetch the complete user details
+      if (response.data.user && !response.data.user.type) {
+        try {
+          // Get all users to find the current one with complete details
+          const usersResponse = await api.get('/getAll');
+          const currentUser = usersResponse.data.users.find(user => user.email === email);
+          
+          if (currentUser) {
+            // Update the response with the complete user data including type
+            response.data.user = {
+              ...response.data.user,
+              type: currentUser.type || 'employee' // Default to employee if type is somehow missing
+            };
+          }
+        } catch (err) {
+          console.error('Error fetching complete user data:', err);
+        }
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Login error:', error.response || error);
@@ -61,12 +81,29 @@ export const authService = {
         fullName: userData.name,
         type: userData.type
       });
+      // Make sure we're using the correct endpoint structure
       const response = await api.post('/create', userData);
+      
+      // Handle successful registration
+      if (response.data && response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
+      
       console.log('Registration successful:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Registration error:', error.response || error);
-      throw error.response?.data || error;
+      console.error('Registration error details:', error);
+      // Throw a more informative error
+      if (error.response) {
+        console.error('Server response:', error.response.data);
+        throw error.response.data;
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+        throw { error: 'No response from server. Please try again.' };
+      } else {
+        console.error('Request setup error:', error.message);
+        throw { error: error.message };
+      }
     }
   },
 

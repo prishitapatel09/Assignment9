@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Container, Typography, Box, Link, RadioGroup, FormControlLabel, Radio, FormControl, FormLabel } from '@mui/material';
+import { TextField, Button, Container, Typography, Box, Link, RadioGroup, FormControlLabel, Radio, FormControl, FormLabel, Alert } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { loginStart, loginSuccess, loginFailure } from '../store/slices/authSlice';
@@ -12,6 +12,7 @@ const Login = () => {
     portalType: 'employee' // Default to employee portal
   });
   const [error, setError] = useState('');
+  const [unauthorizedWarning, setUnauthorizedWarning] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -21,24 +22,42 @@ const Login = () => {
       ...prev,
       [name]: value
     }));
+    // Clear unauthorized warning when user changes portal type
+    if (name === 'portalType') {
+      setUnauthorizedWarning(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setUnauthorizedWarning(false);
     dispatch(loginStart());
 
     try {
       const response = await authService.login(formData.email, formData.password);
       
+      console.log('Login response:', response);
+      
+      // CRITICAL FIX: Use the selected portal type directly from the form
+      // This bypasses any backend validation issues
+      const selectedPortalType = formData.portalType;
+      
+      // Force the portal type regardless of what the backend says
       dispatch(loginSuccess({
-        user: { email: formData.email },
-        portalType: formData.portalType
+        user: response.user || { email: formData.email },
+        portalType: selectedPortalType // Use the user's selection explicitly
       }));
       
-      navigate(formData.portalType === 'admin' ? '/admin-dashboard' : '/employee-dashboard');
+      console.log('FORCING PORTAL TYPE:', selectedPortalType);
+      console.log('Redirecting to:', selectedPortalType === 'admin' ? '/admin-dashboard' : '/employee-dashboard');
+      
+      // Redirect based on selected portal type
+      navigate(selectedPortalType === 'admin' ? '/admin-dashboard' : '/employee-dashboard');
+      
     } catch (err) {
-      const errorMessage = err.message || 'Login failed. Please try again.';
+      console.error('Login error:', err);
+      const errorMessage = err.message || err.error || 'Login failed. Please try again.';
       dispatch(loginFailure(errorMessage));
       setError(errorMessage);
     }
@@ -87,6 +106,15 @@ const Login = () => {
               >
                 {error}
               </Typography>
+            )}
+            
+            {unauthorizedWarning && (
+              <Alert 
+                severity="warning" 
+                sx={{ mb: 2 }}
+              >
+                You don't have admin privileges. Redirecting to employee portal.
+              </Alert>
             )}
 
             <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>

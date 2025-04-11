@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Container, Typography, Box, Link, RadioGroup, FormControlLabel, Radio, FormControl, FormLabel } from '@mui/material';
+import { TextField, Button, Container, Typography, Box, Link, RadioGroup, FormControlLabel, Radio, FormControl, FormLabel, Alert, Collapse } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { loginSuccess } from '../store/slices/authSlice';
@@ -14,6 +14,7 @@ const Signup = () => {
     portalType: 'employee' // Default to employee portal
   });
   const [error, setError] = useState('');
+  const [adminConfirm, setAdminConfirm] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -23,6 +24,13 @@ const Signup = () => {
       ...prev,
       [name]: value
     }));
+
+    // Show admin confirmation if portal type changed to admin
+    if (name === 'portalType' && value === 'admin') {
+      setAdminConfirm(true);
+    } else if (name === 'portalType' && value === 'employee') {
+      setAdminConfirm(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -35,21 +43,47 @@ const Signup = () => {
     }
 
     try {
-      const response = await authService.register({
-        name: formData.fullName,
+      // Register with the selected user type
+      const userType = formData.portalType; // 'admin' or 'employee'
+      
+      // Create user data object with all required fields
+      // Backend expects fullName, not name
+      const userData = {
+        fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
-        type: formData.portalType
-      });
+        type: userType
+      };
       
+      // Log the data being sent for debugging
+      console.log('Sending registration data:', userData);
+      
+      const response = await authService.register(userData);
+      
+      // Store the user in Redux with the correct type
       dispatch(loginSuccess({
-        user: { email: formData.email, name: formData.fullName },
-        portalType: formData.portalType
+        user: response.user || { 
+          email: formData.email, 
+          fullName: formData.fullName,
+          type: userType
+        },
+        portalType: userType
       }));
       
-      navigate(formData.portalType === 'admin' ? '/admin-dashboard' : '/employee-dashboard');
+      // Redirect based on user type
+      navigate(userType === 'admin' ? '/admin-dashboard' : '/employee-dashboard');
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
+      console.error('Registration error:', err);
+      // Extract error message from the error object
+      let errorMessage = 'Registration failed. Please try again.';
+      if (err.error) {
+        errorMessage = err.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      setError(errorMessage);
     }
   };
 
@@ -121,6 +155,15 @@ const Signup = () => {
                 />
               </RadioGroup>
             </FormControl>
+            
+            <Collapse in={adminConfirm}>
+              <Alert 
+                severity="info" 
+                sx={{ mb: 2 }}
+              >
+                You're signing up as an Admin. This will grant you administrative privileges on the platform.
+              </Alert>
+            </Collapse>
 
             <TextField
               fullWidth
@@ -275,4 +318,4 @@ const Signup = () => {
   );
 };
 
-export default Signup; 
+export default Signup;

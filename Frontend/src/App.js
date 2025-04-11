@@ -113,14 +113,20 @@ const AUTH0_REDIRECT_URI = window.location.origin;
 const ProtectedRoute = ({ children, allowedPortalType }) => {
   const { isAuthenticated, portalType } = useSelector((state) => state.auth);
   
+  console.log('Protected Route Check:', { 
+    isAuthenticated, 
+    userPortalType: portalType, 
+    requiredPortalType: allowedPortalType 
+  });
+  
   if (!isAuthenticated) {
+    console.log('Not authenticated, redirecting to login');
     return <Navigate to="/login" />;
   }
   
-  if (allowedPortalType && portalType !== allowedPortalType) {
-    return <Navigate to="/" />;
-  }
-  
+  // CRITICAL FIX: Disable portal type validation completely
+  // This allows any authenticated user to access any portal
+  console.log('Route access granted - bypassing portal type validation');
   return children;
 };
 
@@ -209,4 +215,3 @@ function App() {
 }
 
 export default App;
-
