@@ -11,13 +11,17 @@ import {
 import { createJobStart, createJobSuccess, createJobFailure } from '../../store/slices/jobsSlice';
 import axios from 'axios';
 
+// Configure axios defaults
+axios.defaults.baseURL = 'http://localhost:1000';
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
 const AddJob = () => {
   const dispatch = useDispatch();
   const [formData, setFormData] = useState({
-    companyName: '',
-    jobTitle: '',
+    company: '',
+    title: '',
     description: '',
-    salary: '',
+    salary: ''
   });
   const [error, setError] = useState('');
 
@@ -25,7 +29,7 @@ const AddJob = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'salary' ? Number(value) : value
     }));
   };
 
@@ -35,16 +39,20 @@ const AddJob = () => {
     dispatch(createJobStart());
 
     try {
-      const response = await axios.post('/create/job', formData);
-      dispatch(createJobSuccess(response.data));
+      console.log('Sending job data:', formData); // Debug log
+      const response = await axios.post('/jobs', formData);
+      console.log('Response:', response.data); // Debug log
+      dispatch(createJobSuccess(response.data.data));
+      // Reset form after successful submission
       setFormData({
-        companyName: '',
-        jobTitle: '',
+        company: '',
+        title: '',
         description: '',
-        salary: '',
+        salary: ''
       });
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Failed to create job';
+      console.error('Error creating job:', err.response || err); // Debug log
+      const errorMessage = err.response?.data?.error || 'Failed to create job';
       dispatch(createJobFailure(errorMessage));
       setError(errorMessage);
     }
@@ -66,8 +74,8 @@ const AddJob = () => {
             <TextField
               fullWidth
               label="Company Name"
-              name="companyName"
-              value={formData.companyName}
+              name="company"
+              value={formData.company}
               onChange={handleChange}
               required
               sx={{ mb: 2 }}
@@ -75,8 +83,8 @@ const AddJob = () => {
             <TextField
               fullWidth
               label="Job Title"
-              name="jobTitle"
-              value={formData.jobTitle}
+              name="title"
+              value={formData.title}
               onChange={handleChange}
               required
               sx={{ mb: 2 }}

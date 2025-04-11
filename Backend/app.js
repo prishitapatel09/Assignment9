@@ -12,15 +12,18 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
-}));
+app.use(cors()); // Allow all origins during development
 app.use(express.json());
 app.use('/user', userRoutes);
 app.use('/images', express.static('images')); // Serve images statically
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs)); // Swagger UI
 app.use('/jobs', jobRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something broke!' });
+});
 
 // Start Server
 const PORT = process.env.PORT || 1000;
