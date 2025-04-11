@@ -4,6 +4,7 @@ const userRoutes = require('./routes/userRoutes');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocs = require('./swagger');
 const cors = require('cors');
+const jobRoutes = require('./routes/jobRoutes');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/user', userRoutes);
 app.use('/images', express.static('images')); // Serve images statically
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs)); // Swagger UI
+app.use('/jobs', jobRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 1000;
