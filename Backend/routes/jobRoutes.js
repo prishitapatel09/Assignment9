@@ -10,8 +10,6 @@ const isAdmin = require('../middleware/isAdmin'); // Optional: Admin-only access
  * /jobs:
  *   post:
  *     summary: Create a new job posting
- *     security:
- *       - bearerAuth: []
  *     tags: [Jobs]
  *     requestBody:
  *       required: true
@@ -20,38 +18,26 @@ const isAdmin = require('../middleware/isAdmin'); // Optional: Admin-only access
  *           schema:
  *             type: object
  *             required:
+ *               - company
  *               - title
  *               - description
- *               - requirements
- *               - location
  *               - salary
- *               - company
- *               - type
  *             properties:
+ *               company:
+ *                 type: string
  *               title:
  *                 type: string
  *               description:
  *                 type: string
- *               requirements:
- *                 type: array
- *                 items:
- *                   type: string
- *               location:
- *                 type: string
  *               salary:
- *                 type: string
- *               company:
- *                 type: string
- *               type:
- *                 type: string
- *                 enum: [Full-time, Part-time, Contract, Internship]
+ *                 type: number
  *     responses:
  *       201:
  *         description: Job created successfully
  *       400:
  *         description: Invalid input
  */
-router.post('/', auth, isAdmin, jobController.createJob);
+router.post('/', jobController.createJob);
 
 /**
  * @swagger

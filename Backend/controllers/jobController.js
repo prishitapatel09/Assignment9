@@ -2,10 +2,7 @@ const Job = require('../models/Job');
 
 exports.createJob = async (req, res) => {
     try {
-        const job = new Job({
-            ...req.body,
-            postedBy: req.user._id // Assuming we have user info from auth middleware
-        });
+        const job = new Job(req.body);
         await job.save();
         res.status(201).json({
             success: true,
@@ -21,7 +18,7 @@ exports.createJob = async (req, res) => {
 
 exports.getAllJobs = async (req, res) => {
     try {
-        const jobs = await Job.find().populate('postedBy', 'fullName email');
+        const jobs = await Job.find();
         res.status(200).json({
             success: true,
             count: jobs.length,
