@@ -2,9 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, Container } from '@mui/material';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { logout as logoutAction } from '../store/slices/authSlice';
 
 const NavBar = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated: contextIsAuthenticated, logout: contextLogout } = useAuth();
+  const { isAuthenticated: reduxIsAuthenticated } = useSelector((state) => state.auth);
+  const isAuthenticated = contextIsAuthenticated || reduxIsAuthenticated;
+  
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
@@ -20,7 +27,13 @@ const NavBar = () => {
   }, []);
 
   const handleLogout = () => {
-    logout();
+    // Logout from context
+    contextLogout();
+    
+    // Logout from Redux
+    dispatch(logoutAction());
+    
+    // Navigate to login
     navigate('/login');
   };
 
@@ -54,6 +67,8 @@ const NavBar = () => {
       },
     }
   };
+
+  console.log('Auth state - Context:', contextIsAuthenticated, 'Redux:', reduxIsAuthenticated);
 
   return (
     <AppBar 

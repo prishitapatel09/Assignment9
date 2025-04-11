@@ -13,6 +13,7 @@ import {
   CircularProgress,
   Alert,
   Paper,
+  Stack,
 } from '@mui/material';
 import WorkIcon from '@mui/icons-material/Work';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -69,20 +70,29 @@ const EmployeeDashboard = () => {
   const renderSafeJobCard = (job, index) => {
     console.log('Rendering job:', job);
     return (
-      <Grid item xs={12} sm={6} md={4} key={job._id || job.id || index}>
-        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <CardMedia
-            component="div"
-            sx={{
-              height: 140,
-              backgroundColor: 'primary.light',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <WorkIcon sx={{ fontSize: 60, color: 'white' }} />
-          </CardMedia>
+      <Card 
+        key={job._id || job.id || index} 
+        sx={{ 
+          mb: 2,
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'row',
+          overflow: 'hidden'
+        }}
+      >
+        <CardMedia
+          component="div"
+          sx={{
+            width: 150,
+            backgroundColor: 'primary.light',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <WorkIcon sx={{ fontSize: 60, color: 'white' }} />
+        </CardMedia>
+        <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
           <CardContent sx={{ flexGrow: 1 }}>
             <Typography variant="h5" component="h2" gutterBottom>
               {job.title || 'Untitled Job'}
@@ -133,14 +143,16 @@ const EmployeeDashboard = () => {
               )}
             </Box>
           </CardContent>
-          <CardActions>
-            <Button size="small" color="primary">
+          <CardActions sx={{ px: 2, pb: 2 }}>
+            <Button size="small" color="primary" variant="contained">
               Apply Now
             </Button>
-            <Button size="small">View Details</Button>
+            <Button size="small" variant="outlined" sx={{ ml: 1 }}>
+              View Details
+            </Button>
           </CardActions>
-        </Card>
-      </Grid>
+        </Box>
+      </Card>
     );
   };
 
@@ -151,7 +163,7 @@ const EmployeeDashboard = () => {
           Employee Dashboard
         </Typography>
         <Grid container spacing={3}>
-          <Grid item xs={12}>
+          <Grid item xs={12} md={4}>
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -174,20 +186,18 @@ const EmployeeDashboard = () => {
             </Card>
           </Grid>
 
-          {error && (
-            <Grid item xs={12}>
-              <Alert severity="error">{error}</Alert>
-            </Grid>
-          )}
+          <Grid item xs={12} md={8}>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+            )}
 
-          {loading && (
-            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-              <CircularProgress />
-            </Grid>
-          )}
+            {loading && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+                <CircularProgress />
+              </Box>
+            )}
 
-          {apiResponse && !loading && !jobs.length && (
-            <Grid item xs={12} sx={{ mt: 3 }}>
+            {apiResponse && !loading && !jobs.length && (
               <Paper sx={{ p: 2 }}>
                 <Typography variant="h6" gutterBottom color="error">
                   No job listings found or unable to display the data
@@ -199,20 +209,20 @@ const EmployeeDashboard = () => {
                   <pre>{JSON.stringify(apiResponse, null, 2)}</pre>
                 </Box>
               </Paper>
-            </Grid>
-          )}
+            )}
 
-          {jobs.length > 0 && (
-            <>
-              <Grid item xs={12} sx={{ mt: 3 }}>
+            {jobs.length > 0 && (
+              <>
                 <Typography variant="h5" gutterBottom>
                   Available Job Listings ({jobs.length})
                 </Typography>
-              </Grid>
-              
-              {jobs.map((job, index) => renderSafeJobCard(job, index))}
-            </>
-          )}
+                
+                <Stack spacing={2}>
+                  {jobs.map((job, index) => renderSafeJobCard(job, index))}
+                </Stack>
+              </>
+            )}
+          </Grid>
         </Grid>
       </Box>
     </Container>

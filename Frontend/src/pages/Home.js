@@ -1,7 +1,25 @@
 import { Container, Typography, Button, Box } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { logout as logoutAction } from '../store/slices/authSlice';
 
 const Home = () => {
+  const { isAuthenticated: contextIsAuthenticated, logout: contextLogout } = useAuth();
+  const { isAuthenticated: reduxIsAuthenticated } = useSelector((state) => state.auth);
+  const isAuthenticated = contextIsAuthenticated || reduxIsAuthenticated;
+  
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Logout from both systems
+    contextLogout();
+    dispatch(logoutAction());
+    navigate('/login');
+  };
+
   return (
     <Container>
       <Box sx={{ mt: 4 }}>
@@ -11,23 +29,24 @@ const Home = () => {
         <Typography variant="body1" paragraph>
           Find your dream job with top companies in the tech industry.
         </Typography>
-        <Button
-          component={RouterLink}
-          to="/jobs"
-          variant="contained"
-          color="primary"
-          sx={{ mr: 2 }}
-        >
-          Browse Jobs
-        </Button>
-        <Button
-          component={RouterLink}
-          to="/login"
-          variant="outlined"
-          color="primary"
-        >
-          Login
-        </Button>
+        {isAuthenticated ? (
+          <Button
+            onClick={handleLogout}
+            variant="contained"
+            color="primary"
+          >
+            Logout
+          </Button>
+        ) : (
+          <Button
+            component={RouterLink}
+            to="/login"
+            variant="contained"
+            color="primary"
+          >
+            Login
+          </Button>
+        )}
       </Box>
     </Container>
   );
